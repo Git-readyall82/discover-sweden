@@ -117,7 +117,7 @@ $('ask-form').addEventListener('submit',async e=>{
   if(!r.ok)throw new Error(d.error||'Server error');
   ans.textContent=d.answer;
   if(d.cards&&d.cards.length){
-   sug.innerHTML=d.cards.map(c=>`<article class="card"><span class="tag">${esc(c.category)}</span><h3>${esc(c.name)}</h3><p>${esc(c.extract)}</p><a href="${esc(c.url)}" target="_blank" rel="noreferrer">Wikipedia ↗</a></article>`).join('');
+   sug.innerHTML=d.cards.map(c=>`<article class="card"><span class="tag">${esc(c.category)}</span><h3>${esc(c.name)}</h3>${c.image?`<img src="${esc(c.image)}" alt="${esc(c.name)}" style="width:100%;border-radius:8px;margin:8px 0">`:''}<p>${esc(c.extract)}</p><a href="${esc(c.url)}" target="_blank" rel="noreferrer">Wikipedia ↗</a></article>`).join('');
   }
  }catch(err){
   ans.textContent='Error: '+err.message;
