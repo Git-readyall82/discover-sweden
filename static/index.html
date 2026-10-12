@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Discover Sweden</title>
+<style>
+:root{--blue:#1765a8;--gold:#f2c14e;--ink:#172536;--muted:#637184;--paper:#f5f7fa}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.55 system-ui,sans-serif}
+header{background:#104b80;color:white;padding:48px 20px 42px}
+.wrap{max-width:1100px;margin:auto}
+.eyebrow{text-transform:uppercase;letter-spacing:.13em;font-size:.76rem;font-weight:700;color:var(--gold)}
+h1{font-size:clamp(2.2rem,6vw,4rem);line-height:1.08;margin:10px 0}
+header p{max-width:650px;color:#e0ebf6}
+main{max-width:1100px;margin:30px auto;padding:0 20px}
+h2{margin:0 0 14px}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 24px}
+button{cursor:pointer;font:inherit}
+.filter{border:1px solid #ccd5df;background:white;border-radius:24px;padding:8px 14px}
+.filter.active,.primary{background:var(--blue);color:white;border-color:var(--blue)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
+.item{background:white;border:1px solid #e1e6ec;border-radius:14px;padding:18px;box-shadow:0 3px 12px #182c4010}
+.item h3{margin:7px 0}
+.item p{color:var(--muted);margin:6px 0 14px}
+.tag{font-size:.75rem;color:var(--blue);font-weight:700;text-transform:uppercase}
+.more{border:0;background:transparent;color:var(--blue);padding:0;font-weight:700}
+section{margin:34px 0}
+#chat{background:white;border:1px solid #e1e6ec;border-radius:16px;padding:22px}
+textarea{display:block;width:100%;min-height:90px;padding:12px;border:1px solid #ccd5df;border-radius:10px;font:inherit}
+.primary{border:0;border-radius:9px;padding:10px 16px;margin-top:10px}
+#answer{white-space:pre-wrap;margin-top:15px}
+.status{color:var(--muted);font-size:.9rem}
+footer{text-align:center;padding:28px;color:var(--muted)}
+a{color:var(--blue)}
+</style>
+</head>
+<body>
+<header>
+<div class="wrap">
+<div class="eyebrow">A little Nordic inspiration</div>
+<h1>Discover Sweden 🇸🇪</h1>
+<p>Explore the places, people, food, traditions and ideas that make Sweden special. Pick a topic or ask your AI guide a question.</p>
+</div>
+</header>
+<main>
+<section>
+<h2>Explore Sweden</h2>
+<div id="filters" class="filters"></div>
+<div id="cards" class="grid"><p>Loading Swedish discoveries…</p></div>
+<p id="count" class="status"></p>
+</section>
+<section id="chat">
+<h2>Ask your Sweden guide</h2>
+<p>Curious about Swedish culture, history, food or places to visit? Ask away.</p>
+<form id="ask-form">
+<textarea id="question" maxlength="500" required placeholder="For example: What is fika, and why is it important in Sweden?"></textarea>
+<button class="primary" id="ask-button">Ask AI guide</button>
+</form>
+<div id="answer" role="status" aria-live="polite"></div>
+</section>
+</main>
+<footer>Discover Sweden · Learn something new about Sweden</footer>
+<script>
+const $=s=>document.querySelector(s);
+let allEntries=[], selected='All';
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function renderFilters(){
+ const cats=['All',...new Set(allEntries.map(e=>e.category).filter(Boolean))];
+ $('#filters').innerHTML=cats.map(c=>`<button class="filter ${c===selected?'active':''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('');
+ $('#filters').querySelectorAll('button').forEach(b=>b.onclick=()=>{selected=b.dataset.cat;renderFilters();renderCards()});
+}
+function renderCards(){
+ const entries=selected==='All'?allEntries:allEntries.filter(e=>e.category===selected);
+ $('#cards').innerHTML=entries.map(e=>`<article class="item">
+ <div class="tag">${esc(e.category)}</div><h3>${esc(e.name)}</h3>
+ <p id="desc-${encodeURIComponent(e.id)}">Discover this part of Sweden.</p>
+ <button class="more" data-id="${esc(e.id)}">Read more →</button>
+ </article>`).join('')||'<p>No entries in this category.</p>';
+ $('#count').textContent=`Showing ${entries.length} of ${allEntries.length} discoveries`;
+ $('#cards').querySelectorAll('.more').forEach(b=>b.onclick=()=>loadCard(b.dataset.id,b));
+}
+async function loadCard(id,button){
+ button.disabled=true;button.textContent='Loading…';
+ try{
+  const r=await fetch('/api/card/'+encodeURIComponent(id));
+  const d=await r.json();if(!r.ok)throw Error(d.error||'Could not load details');
+  const p=document.getElementById('desc-'+encodeURIComponent(id));
+  p.textContent=d.extract||'No description is available.';
+  if(d.image){const img=document.createElement('img');img.src=d.image;img.alt=d.name||'Swedish discovery';img.loading='lazy';img.style='width:100%;border-radius:9px;margin-top:10px';p.after(img)}
+  if(d.url){const a=document.createElement('a');a.href=d.url;a.target='_blank';a.rel='noopener noreferrer';a.textContent='Read on Wikipedia';p.after(a)}
+  button.textContent='Loaded';
+ }catch(e){button.textContent='Try again';$('#count').textContent=e.message}
+ finally{button.disabled=false}
+}
+async function init(){
+ try{
+  const r=await fetch('/api/entries');if(!r.ok)throw Error('Could not load entries');
+  allEntries=await r.json();renderFilters();renderCards();
+ }catch(e){$('#cards').innerHTML='<p>Could not load discoveries. Please refresh the page.</p>';$('#count').textContent=e.message}
+}
+$('#ask-form').addEventListener('submit',async e=>{
+ e.preventDefault();const question=$('#question').value.trim();if(!question)return;
+ const button=$('#ask-button');button.disabled=true;button.textContent='Thinking…';
+ $('#answer').textContent='Your AI guide is preparing an answer…';
+ try{
+  const r=await fetch('/api/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question})});
+  const d=await r.json();if(!r.ok)throw Error(d.error||'AI request failed');
+  $('#answer').textContent=d.answer||d.response||d.text||JSON.stringify(d);
+ }catch(err){$('#answer').textContent='Sorry, the AI guide could not answer: '+err.message}
+ finally{button.disabled=false;button.textContent='Ask AI guide'}
+});
+init();
+</script>
+</body>
+</html>
