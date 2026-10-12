@@ -8,108 +8,125 @@
 :root{--blue:#1765a8;--gold:#f2c14e;--ink:#172536;--muted:#637184;--paper:#f5f7fa}
 *{box-sizing:border-box}
 body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.55 system-ui,sans-serif}
-header{background:#104b80;color:white;padding:48px 20px 42px}
-.wrap{max-width:1100px;margin:auto}
-.eyebrow{text-transform:uppercase;letter-spacing:.13em;font-size:.76rem;font-weight:700;color:var(--gold)}
-h1{font-size:clamp(2.2rem,6vw,4rem);line-height:1.08;margin:10px 0}
-header p{max-width:650px;color:#e0ebf6}
-main{max-width:1100px;margin:30px auto;padding:0 20px}
-h2{margin:0 0 14px}
-.filters{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 24px}
-button{cursor:pointer;font:inherit}
-.filter{border:1px solid #ccd5df;background:white;border-radius:24px;padding:8px 14px}
-.filter.active,.primary{background:var(--blue);color:white;border-color:var(--blue)}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
-.item{background:white;border:1px solid #e1e6ec;border-radius:14px;padding:18px;box-shadow:0 3px 12px #182c4010}
-.item h3{margin:7px 0}
-.item p{color:var(--muted);margin:6px 0 14px}
-.tag{font-size:.75rem;color:var(--blue);font-weight:700;text-transform:uppercase}
-.more{border:0;background:transparent;color:var(--blue);padding:0;font-weight:700}
-section{margin:34px 0}
-#chat{background:white;border:1px solid #e1e6ec;border-radius:16px;padding:22px}
-textarea{display:block;width:100%;min-height:90px;padding:12px;border:1px solid #ccd5df;border-radius:10px;font:inherit}
-.primary{border:0;border-radius:9px;padding:10px 16px;margin-top:10px}
-#answer{white-space:pre-wrap;margin-top:15px}
-.status{color:var(--muted);font-size:.9rem}
-footer{text-align:center;padding:28px;color:var(--muted)}
-a{color:var(--blue)}
+header{background:linear-gradient(120deg,#123b63,#1765a8);color:white;padding:45px 20px}
+.wrap{max-width:1100px;margin:auto;padding:0 20px}
+h1{font-size:clamp(2rem,5vw,3.5rem);line-height:1.1;margin:0 0 12px}
+header p{max-width:650px;color:#e4efff}
+main{max-width:1100px;margin:28px auto;padding:0 20px}
+h2{margin-top:28px}
+.filters{display:flex;gap:10px;flex-wrap:wrap;margin:15px 0}
+#search{flex:1 1 260px;min-width:220px}
+button,select,input{font:inherit;border-radius:10px;padding:11px 14px;border:1px solid #cbd5e1}
+button{background:var(--blue);color:white;border:0;cursor:pointer}
+button:hover{filter:brightness(.92)}
+input,select{background:white}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.card{background:white;border:1px solid #e1e7ef;border-radius:16px;padding:18px;box-shadow:0 3px 12px #15283a0a}
+.card h3{margin:5px 0}
+.tag{display:inline-block;background:#e8f2fc;color:#15518a;border-radius:20px;padding:3px 10px;font-size:.85rem}
+.muted{color:var(--muted)}
+.ai{background:white;border:1px solid #dce4ee;border-radius:16px;padding:20px;margin-top:24px}
+form{display:flex;gap:10px;flex-wrap:wrap}
+form input{flex:1;min-width:180px}
+#answer{white-space:pre-wrap;margin-top:16px}
+#suggestions .card{margin-top:10px}
+footer{text-align:center;color:var(--muted);padding:30px}
 </style>
 </head>
 <body>
-<header>
-<div class="wrap">
-<div class="eyebrow">A little Nordic inspiration</div>
+<header><div class="wrap">
 <h1>Discover Sweden 🇸🇪</h1>
-<p>Explore the places, people, food, traditions and ideas that make Sweden special. Pick a topic or ask your AI guide a question.</p>
-</div>
-</header>
+<p>Find beautiful places, local culture, Swedish traditions and experiences worth exploring. Ask your AI guide for personalised suggestions.</p>
+</div></header>
 <main>
 <section>
 <h2>Explore Sweden</h2>
-<div id="filters" class="filters"></div>
-<div id="cards" class="grid"><p>Loading Swedish discoveries…</p></div>
-<p id="count" class="status"></p>
+<p class="muted">Browse the discoveries or filter by category.</p>
+<div class="filters">
+<input id="search" placeholder="Search places and experiences…" aria-label="Search discoveries">
+<select id="category" aria-label="Filter by category"><option value="">All categories</option></select>
+<button id="reset" type="button">Reset</button>
+</div>
+<p id="status" class="muted">Loading discoveries…</p>
+<div id="entries" class="grid"></div>
 </section>
-<section id="chat">
-<h2>Ask your Sweden guide</h2>
-<p>Curious about Swedish culture, history, food or places to visit? Ask away.</p>
+<section class="ai">
+<h2>Ask the AI Sweden Guide ✨</h2>
+<p class="muted">For example: “What should I visit in southern Sweden for a weekend?”</p>
 <form id="ask-form">
-<textarea id="question" maxlength="500" required placeholder="For example: What is fika, and why is it important in Sweden?"></textarea>
-<button class="primary" id="ask-button">Ask AI guide</button>
+<input id="question" maxlength="500" required placeholder="Ask about Sweden…">
+<button id="ask-button" type="submit">Ask guide</button>
 </form>
-<div id="answer" role="status" aria-live="polite"></div>
+<div id="answer" role="status"></div>
+<div id="suggestions" class="grid"></div>
 </section>
 </main>
-<footer>Discover Sweden · Learn something new about Sweden</footer>
+<footer>Discover Sweden · Explore more, one question at a time.</footer>
 <script>
-const $=s=>document.querySelector(s);
-let allEntries=[], selected='All';
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function renderFilters(){
- const cats=['All',...new Set(allEntries.map(e=>e.category).filter(Boolean))];
- $('#filters').innerHTML=cats.map(c=>`<button class="filter ${c===selected?'active':''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('');
- $('#filters').querySelectorAll('button').forEach(b=>b.onclick=()=>{selected=b.dataset.cat;renderFilters();renderCards()});
+const $=id=>document.getElementById(id);
+let entries=[];
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function render(){
+ const q=$('search').value.trim().toLowerCase(), cat=$('category').value;
+ const found=entries.filter(e=>(!cat||e.category===cat)&&(!q||[e.name,e.category,e.id].some(v=>String(v||'').toLowerCase().includes(q))));
+ $('status').textContent=found.length?`${found.length} discover${found.length===1?'y':'ies'}`:'No discoveries match your search.';
+ $('entries').innerHTML=found.map(e=>`<article class="card"><span class="tag">${esc(e.category)}</span><h3>${esc(e.name)}</h3><button type="button" data-id="${esc(e.id)}">Learn more</button><div class="details" id="details-${esc(e.id)}"></div></article>`).join('');
+ $('entries').querySelectorAll('button[data-id]').forEach(b=>b.addEventListener('click',async()=>{
+  const id=b.getAttribute('data-id'), target=$('details-'+id);
+  if(target.innerHTML){target.innerHTML='';return;}
+  target.innerHTML='<p class="muted">Loading details…</p>';
+  try{
+   const r=await fetch('/api/card/'+id);
+   const d=await r.json();
+   target.innerHTML=`<p>${esc(d.extract||'No description available.')}</p>${d.image?`<img src="${esc(d.image)}" alt="" style="width:100%;border-radius:8px;margin:8px 0">`:''}<p><a href="${esc(d.url)}" target="_blank" rel="noreferrer">Read more on Wikipedia ↗</a></p>`;
+  }catch{target.innerHTML='<p class="muted">Could not load details.</p>';}
+ }));
 }
-function renderCards(){
- const entries=selected==='All'?allEntries:allEntries.filter(e=>e.category===selected);
- $('#cards').innerHTML=entries.map(e=>`<article class="item">
- <div class="tag">${esc(e.category)}</div><h3>${esc(e.name)}</h3>
- <p id="desc-${encodeURIComponent(e.id)}">Discover this part of Sweden.</p>
- <button class="more" data-id="${esc(e.id)}">Read more →</button>
- </article>`).join('')||'<p>No entries in this category.</p>';
- $('#count').textContent=`Showing ${entries.length} of ${allEntries.length} discoveries`;
- $('#cards').querySelectorAll('.more').forEach(b=>b.onclick=()=>loadCard(b.dataset.id,b));
-}
-async function loadCard(id,button){
- button.disabled=true;button.textContent='Loading…';
- try{
-  const r=await fetch('/api/card/'+encodeURIComponent(id));
-  const d=await r.json();if(!r.ok)throw Error(d.error||'Could not load details');
-  const p=document.getElementById('desc-'+encodeURIComponent(id));
-  p.textContent=d.extract||'No description is available.';
-  if(d.image){const img=document.createElement('img');img.src=d.image;img.alt=d.name||'Swedish discovery';img.loading='lazy';img.style='width:100%;border-radius:9px;margin-top:10px';p.after(img)}
-  if(d.url){const a=document.createElement('a');a.href=d.url;a.target='_blank';a.rel='noopener noreferrer';a.textContent='Read on Wikipedia';p.after(a)}
-  button.textContent='Loaded';
- }catch(e){button.textContent='Try again';$('#count').textContent=e.message}
- finally{button.disabled=false}
-}
+
 async function init(){
  try{
-  const r=await fetch('/api/entries');if(!r.ok)throw Error('Could not load entries');
-  allEntries=await r.json();renderFilters();renderCards();
- }catch(e){$('#cards').innerHTML='<p>Could not load discoveries. Please refresh the page.</p>';$('#count').textContent=e.message}
+  const r=await fetch('/api/entries');
+  entries=await r.json();
+  const cats=[...new Set(entries.map(e=>e.category))].sort();
+  const sel=$('category');
+  cats.forEach(c=>{const opt=document.createElement('option');opt.value=c;opt.textContent=c;sel.appendChild(opt);});
+  render();
+ }catch{
+  $('status').textContent='Could not load discoveries from server.';
+ }
 }
-$('#ask-form').addEventListener('submit',async e=>{
- e.preventDefault();const question=$('#question').value.trim();if(!question)return;
- const button=$('#ask-button');button.disabled=true;button.textContent='Thinking…';
- $('#answer').textContent='Your AI guide is preparing an answer…';
+
+$('search').addEventListener('input',render);
+$('category').addEventListener('change',render);$('reset').addEventListener('click',()=>{
+ $('search').value='';$('category').value='';
+ render();
+});
+
+$('ask-form').addEventListener('submit',async e=>{
+ e.preventDefault();
+ const btn=$('ask-button'), ans=$('answer'), sug=$('suggestions');
+ const question=$('question').value.trim();
+ if(!question)return;
+ btn.disabled=true;
+ btn.textContent='Thinking…';
+ ans.textContent='';
+ sug.innerHTML='';
  try{
   const r=await fetch('/api/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question})});
-  const d=await r.json();if(!r.ok)throw Error(d.error||'AI request failed');
-  $('#answer').textContent=d.answer||d.response||d.text||JSON.stringify(d);
- }catch(err){$('#answer').textContent='Sorry, the AI guide could not answer: '+err.message}
- finally{button.disabled=false;button.textContent='Ask AI guide'}
+  const d=await r.json();
+  if(!r.ok)throw new Error(d.error||'Server error');
+  ans.textContent=d.answer;
+  if(d.cards&&d.cards.length){
+   sug.innerHTML=d.cards.map(c=>`<article class="card"><span class="tag">${esc(c.category)}</span><h3>${esc(c.name)}</h3><p>${esc(c.extract)}</p><a href="${esc(c.url)}" target="_blank" rel="noreferrer">Wikipedia ↗</a></article>`).join('');
+  }
+ }catch(err){
+  ans.textContent='Error: '+err.message;
+ }finally{
+  btn.disabled=false;
+  btn.textContent='Ask guide';
+ }
 });
+
 init();
 </script>
 </body>
